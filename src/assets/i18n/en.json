@@ -45,6 +45,21 @@
     "target-unknown": "Unknown — decided at execution time",
     "target-unknown-warning": "This call was recovered from a bytes parameter. The contract it executes against is chosen at execution time and cannot be determined here — it is NOT the contract shown above it. Amounts are therefore shown in raw base units, with no token symbol."
   },
+  "accessibility": {
+    "more_actions": "More actions",
+    "open_secret": "Open secret {{ label }}",
+    "select_account": "Select account {{ label }}",
+    "copy_address": "Copy account address",
+    "add_recovery_word": "Add recovery word at position {{ position }}",
+    "choose_recovery_word": "Choose recovery word for position {{ position }}",
+    "backspace": "Backspace",
+    "close": "Close",
+    "back": "Back",
+    "seedphrase_label": "Seed phrase",
+    "recovery_share_label": "Recovery share",
+    "reveal_bip39_passphrase_label": "Reveal BIP-39 passphrase",
+     "social_recovery_help_title": "Social Recovery Help"
+  },
   "account-list": {
     "delete": "Delete"
   },
