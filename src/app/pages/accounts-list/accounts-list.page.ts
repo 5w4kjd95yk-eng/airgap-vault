@@ -68,6 +68,15 @@ export class AccountsListPage {
       .catch(handleErrorLocal(ErrorCategory.IONIC_NAVIGATION))
   }
 
+  public onWalletKeydown(event: KeyboardEvent, wallet: AirGapWallet): void {
+    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') {
+      return
+    }
+
+    event.preventDefault()
+    this.goToReceiveAddress(wallet)
+  }
+
   public async syncWallets(): Promise<void> {
     const strategy: ModeStrategy = await this.modeService.strategy()
     await strategy.syncAll()
