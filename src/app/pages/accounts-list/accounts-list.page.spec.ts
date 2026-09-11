@@ -47,4 +47,19 @@ describe('AccountsListPage', () => {
     expect(event.preventDefault).not.toHaveBeenCalled()
     expect(component.goToReceiveAddress).not.toHaveBeenCalled()
   })
+
+  it('uses the visible account fields as the account accessibility label', async () => {
+    const wallet = {
+      protocol: {
+        getName: async (): Promise<string> => 'Bitcoin',
+        getSymbol: async (): Promise<string> => 'BTC'
+      },
+      receivingPublicAddress: 'bc1-account'
+    } as unknown as AirGapWallet
+    component.secret = { wallets: [wallet] } as any
+
+    await (component as any).loadWallets()
+
+    expect(component.visibleAccountLabel(wallet)).toBe('Bitcoin, BTC, bc1-account')
+  })
 })
