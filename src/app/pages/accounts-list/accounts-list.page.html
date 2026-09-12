@@ -33,7 +33,7 @@
               <ion-checkbox
                 slot="start"
                 (ionChange)="onWalletSelected($event, wallet)"
-                [attr.aria-label]="'accessibility.select_account' | translate: { label: wallet.label }"
+                [attr.aria-label]="'accessibility.select_account' | translate: { label: visibleAccountLabel(wallet) }"
               ></ion-checkbox>
               <airgap-account-item [wallet]="wallet"></airgap-account-item>
             </ion-item>
@@ -45,7 +45,7 @@
               role="button"
               tabindex="0"
               [wallet]="wallet"
-              [attr.aria-label]="wallet.label"
+              [attr.aria-label]="visibleAccountLabel(wallet)"
               (click)="goToReceiveAddress(wallet)"
               (keydown)="onWalletKeydown($event, wallet)"
             ></airgap-account-item>
