@@ -541,6 +541,7 @@
     "settings": "Settings"
   },
   "deserialized-detail": {
+    "unified_signing": "Unified signing requested: SIGHASH ALL with replay protection (0x21).",
     "sign_text": "You're about to sign:",
     "transaction": {
       "title": "Sign Transaction",

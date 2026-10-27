@@ -383,14 +383,14 @@ export class SecretsService {
       secret.wallets.map(async (wallet: AirGapWallet) => {
         const match = wallet.masterFingerprint === fingerprint && (await wallet.protocol.getIdentifier()) === protocolIdentifier
         if (match) {
-          if (!derivationPath.startsWith(wallet.derivationPath)) {
+          const requestedPath = derivationPath.replace(/[hH]/g, "'")
+          const accountPath = wallet.derivationPath.replace(/[hH]/g, "'").replace(/\/$/, '')
+          if (!requestedPath.startsWith(`${accountPath}/`)) {
             return undefined
           }
 
-          // This uses the same logic to find child key as "sign" method in the BitcoinSegwitProtocol
           const bip32PK = this.bip32.fromBase58(new ExtendedPublicKey(wallet.publicKey).toXpub())
-          const cutoffFrom = derivationPath.lastIndexOf("'") || derivationPath.lastIndexOf('h')
-          const childPath = derivationPath.substr(cutoffFrom + 2)
+          const childPath = requestedPath.slice(accountPath.length + 1)
           const walletPublicKey = bip32PK.derivePath(childPath).publicKey
 
           if (protocolIdentifier === MainProtocolSymbols.BTC_TAPROOT) {

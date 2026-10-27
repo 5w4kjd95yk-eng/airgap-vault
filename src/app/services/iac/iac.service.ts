@@ -166,8 +166,12 @@ export class IACService extends BaseIACService {
       const decodedPSBT = bitcoinJS.Psbt.fromHex(transaction.psbt)
       const isTaproot = decodedPSBT.data.inputs.some((input) => input.tapBip32Derivation)
 
+      if (isTaproot && decodedPSBT.data.inputs.some((input) => !input.tapBip32Derivation)) {
+        throw new Error('Mixed Taproot and Segwit inputs are not supported')
+      }
+
       for (const input of decodedPSBT.data.inputs) {
-        const path = isTaproot ? input.tapBip32Derivation : input.bip32Derivation
+        const path = (isTaproot ? input.tapBip32Derivation : input.bip32Derivation) ?? []
 
         for (const derivation of path) {
           const masterFingerprint = derivation.masterFingerprint.toString('hex')

@@ -27,7 +27,7 @@
     "lint-ci": "ng lint app --format json > ./lintReport.json || true",
     "lint-fix": "tslint --fix --project tsconfig.json",
     "e2e": "ng e2e",
-    "postinstall": "jetifier && node apply-diagnostic-modules.js && node patch-dependency-versions.js && node fix-qrscanner-gradle.js && node copy-builtin-modules.js",
+    "postinstall": "jetifier && node apply-diagnostic-modules.js && node patch-dependency-versions.js && node fix-qrscanner-gradle.js && node copy-builtin-modules.js && node scripts/patch-unified-signing.cjs",
     "sonar-scanner": "sonar-scanner",
     "prettier": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "remove-sapling": "replace './assets/sapling/sapling-' './assets/no-sapling-web/sapling-' ./src/app/app.component.ts",
@@ -37,7 +37,8 @@
     "electron:install": "yarn --cwd electron/ install --",
     "install-test-dependencies": "node install-test-deps.js",
     "install-build-dependencies": "node install-build-deps.js",
-    "apply-diagnostic-modules": "node apply-diagnostic-modules.js"
+    "apply-diagnostic-modules": "node apply-diagnostic-modules.js",
+    "test:unified": "node --test scripts/unified-signing.test.cjs"
   },
   "resolutions": {
     "@airgap/aeternity": "0.14.0",

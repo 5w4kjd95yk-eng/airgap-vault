@@ -14,6 +14,7 @@ import { SelectAccountPage } from '../select-account/select-account.page'
 import * as actions from './deserialized-detail.actions'
 import * as fromDeserializedDetail from './deserialized-detail.reducer'
 import { Alert, Modal, Mode, Task, UnsignedMessage } from './deserialized.detail.types'
+import { Psbt } from '@airgap/coinlib-core/dependencies/src/bitcoinjs-lib-6.1.7/src/index'
 
 type ModalOnDismissAction = (modalData: OverlayEventDetail<unknown>) => Promise<void>
 
@@ -41,6 +42,7 @@ export class DeserializedDetailPage implements OnDestroy {
   public readonly UIResourceStatus: typeof UIResourceStatus = UIResourceStatus
 
   private loadingElement: HTMLIonLoadingElement | undefined
+  public unifiedSigningRequested: boolean = false
   private alertElement: HTMLIonAlertElement | undefined
   private modalElement: HTMLIonModalElement | undefined
   private readonly ngDestroyed$: Subject<void> = new Subject()
@@ -56,6 +58,10 @@ export class DeserializedDetailPage implements OnDestroy {
       const transactionInfos = state.transactionInfos
       this.signingWallet = transactionInfos[0].wallet
       this.secretLabel = transactionInfos[0].secret.label
+      this.unifiedSigningRequested = transactionInfos.some((info) => {
+        const psbt = info.signTransactionRequest?.payload?.transaction?.psbt
+        return typeof psbt === 'string' && Psbt.fromHex(psbt).data.inputs.some((input) => input.sighashType === 0x21)
+      })
     }
 
     this.mode$ = this.store.select(fromDeserializedDetail.selectMode)
