@@ -1,6 +1,16 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
+// Validate the assets Gradle actually packages, including builds made directly
+// from Android Studio without rerunning the web build or Capacitor sync.
+tasks.register('checkUnifiedSigner', Exec) {
+    workingDir rootProject.projectDir.parentFile
+    commandLine 'node', 'scripts/check-unified-bundle.cjs', 'android/app/src/main/assets/public'
+}
+tasks.named('preBuild').configure {
+    dependsOn 'checkUnifiedSigner'
+}
+
 android {
     namespace "it.airgap.vault"
     compileSdkVersion project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 31

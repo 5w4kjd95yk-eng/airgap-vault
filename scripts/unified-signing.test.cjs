@@ -111,4 +111,50 @@ test('actual Vault protocol and QR codecs round trip all policies with single an
     }
   }
 })
+test('five-input account 1 payment signs every input through the Vault protocol and QR codecs', async () => {
+  const { mnemonicToSeedSync } = require('bip39')
+  const { CryptoPSBT } = require('@keystonehq/bc-ur-registry')
+  const { UREncoder, URDecoder } = require('@ngraveio/bc-ur')
+  const { exchange } = require('./sighash-vault-qr.cjs')
+  const mnemonic = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+  const account = bip32.fromSeed(mnemonicToSeedSync(mnemonic)).derivePath("m/84'/0'/1'")
+  const pubkey = Buffer.from(account.derivePath('0/0').publicKey)
+  const script = lib.payments.p2wpkh({ pubkey }).output
+  const psbt = new lib.Psbt()
+  for (let i = 0; i < 5; i++) {
+    const parent = new lib.Transaction()
+    parent.addInput(Buffer.alloc(32, i + 1), 0)
+    parent.addOutput(script, 100000)
+    psbt.addInput({
+      hash: parent.getHash(), index: 0, sequence: 0xfffffffe,
+      nonWitnessUtxo: parent.toBuffer(), witnessUtxo: parent.outs[0], sighashType: 0x21,
+      bip32Derivation: [{ pubkey, masterFingerprint: Buffer.from(account.fingerprint), path: "m/84'/0'/1'/0/0" }]
+    })
+  }
+  psbt.addOutput({ script, value: 499000 })
+  const encoder = new UREncoder(new CryptoPSBT(psbt.toBuffer()).toUR(), 200)
+  const response = await exchange({ mnemonic, fragments: Array.from({ length: encoder.fragmentsLength }, () => encoder.nextPart()) })
+  const decoder = new URDecoder()
+  for (const frame of response.fragments) decoder.receivePart(frame)
+  assert.ok(decoder.isComplete() && decoder.isSuccess())
+  const returned = lib.Psbt.fromBuffer(CryptoPSBT.fromCBOR(decoder.resultUR().cbor).getPSBT())
+  assert.notEqual(returned.toHex(), psbt.toHex())
+  assert.equal(returned.data.inputs.filter(input => input.partialSig?.length === 1).length, 5)
+  assert.ok(returned.validateSignaturesOfAllInputs((key, hash, signature) => ecc.verify(hash, key, signature)))
+  returned.finalizeAllInputs()
+  assert.equal(returned.extractTransaction().ins.filter(input => input.witness.length === 2).length, 5)
+})
+test('native bundle guard rejects stale assets even with patched dependencies installed', () => {
+  const fs = require('fs')
+  const os = require('os')
+  const path = require('path')
+  const { checkUnifiedBundle } = require('./check-unified-bundle.cjs')
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'vault-stale-assets-'))
+  try {
+    fs.writeFileSync(path.join(directory, 'vendor.js'), 'old signer: catch (e) {}')
+    assert.throws(() => checkUnifiedBundle(directory), /Missing unified signer/)
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true })
+  }
+})
 module.exports = { fixture, accounts, lib, ecc }

@@ -2,7 +2,9 @@
 // failures deliberately stop installation rather than silently losing signing fixes.
 const fs = require('fs')
 const path = require('path')
+const crypto = require('crypto')
 const root = path.resolve(__dirname, '..')
+const patchedFiles = []
 const core = 'node_modules/@airgap/coinlib-core/dependencies/src/bitcoinjs-lib-6.1.7/src/'
 const bitcoin = 'node_modules/@airgap/bitcoin/v1/'
 for (const [pkg, version] of [['bitcoin', '0.14.0'], ['coinlib-core', '0.14.0']]) {
@@ -10,6 +12,7 @@ for (const [pkg, version] of [['bitcoin', '0.14.0'], ['coinlib-core', '0.14.0']]
 }
 function patch(file, transform) {
   const target = path.join(root, file)
+  patchedFiles.push(target)
   const source = fs.readFileSync(target, 'utf8')
   if (source.includes('// airgap-unified-v1')) return
   let output = source
@@ -60,4 +63,20 @@ for (const name of ['BitcoinSegwitProtocol', 'BitcoinTaprootProtocol']) {
     if (start < 0 || end < 0) throw new Error('Signing method patch anchor changed')
     replace(source().slice(start, end), `                require('../utils/sign-account-psbt').signAccountPsbt(decodedPSBT, bip32, ${name === 'BitcoinTaprootProtocol'}, this.bitcoinJS.lib);\n`)
   })
+}
+
+// Angular/webpack treats node_modules as immutable and can keep compiling the
+// original package after an in-place patch. Invalidate once per installed patch
+// revision, including the first run against caches created before this stamp.
+const digest = crypto.createHash('sha256')
+for (const file of [...patchedFiles, path.join(__dirname, 'unified-sighash.js'), path.join(__dirname, 'sign-account-psbt.js')]) {
+  digest.update(fs.readFileSync(file))
+}
+const revision = digest.digest('hex')
+const cache = path.join(root, '.angular', 'cache')
+const stamp = path.join(cache, 'airgap-unified.sha256')
+if (!fs.existsSync(stamp) || fs.readFileSync(stamp, 'utf8') !== revision) {
+  fs.rmSync(cache, { recursive: true, force: true })
+  fs.mkdirSync(cache, { recursive: true })
+  fs.writeFileSync(stamp, revision)
 }
